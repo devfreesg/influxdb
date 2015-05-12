@@ -1,6 +1,9 @@
 package influxql
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 import "sort"
 
@@ -117,6 +120,7 @@ func TestInitializeMapFuncDerivative(t *testing.T) {
 		Name: "derivative",
 		Args: []Expr{
 			&VarRef{Val: " field1"},
+			&DurationLiteral{Val: time.Hour},
 		},
 	}
 
@@ -130,30 +134,13 @@ func TestInitializeMapFuncDerivative(t *testing.T) {
 		Name: "derivative",
 		Args: []Expr{
 			&Call{Name: "mean", Args: []Expr{&VarRef{Val: "field1"}}},
+			&DurationLiteral{Val: time.Hour},
 		},
 	}
 
 	_, err = InitializeMapFunc(c)
 	if err != nil {
 		t.Errorf("InitializeMapFunc(%v) unexpected error.  got %v", c, err)
-	}
-}
-
-func TestReduceDerivativeVar(t *testing.T) {
-	values := []interface{}{
-		[]interface{}{
-			float64(1), float64(2), float64(3), float64(4),
-		},
-	}
-
-	d := ReduceDerivative(values)
-
-	if _, ok := d.(float64); !ok {
-		t.Fatalf("ReduceDerivative(%v) expected float64. got %#v", values, d)
-	}
-
-	if exp := float64(4-1) / float64(4); d.(float64) != exp {
-		t.Fatalf("ReduceDerivative(%v) mismatch. exp %v, got %v", values, exp, d)
 	}
 }
 
