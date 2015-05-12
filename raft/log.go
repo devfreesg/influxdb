@@ -1253,7 +1253,18 @@ type heartbeatResponse struct {
 // Apply executes a command against the log.
 // This function returns once the command has been committed to the log.
 func (l *Log) Apply(command []byte) (uint64, error) {
-	return l.internalApply(LogEntryCommand, command)
+	// Add index to the log.
+	index, err := l.internalApply(LogEntryCommand, command)
+	if err != nil {
+		return index, err
+	}
+
+	// Wait for index to be applied.
+	if err := l.Wait(index); err != nil {
+		return index, err
+	}
+
+	return index, nil
 }
 
 func (l *Log) internalApply(typ LogEntryType, command []byte) (index uint64, err error) {
@@ -1289,7 +1300,6 @@ func (l *Log) internalApply(typ LogEntryType, command []byte) (index uint64, err
 
 // Wait blocks until a given index is applied.
 func (l *Log) Wait(idx uint64) error {
-	// TODO(benbjohnson): Check for leadership change (?).
 	// TODO(benbjohnson): Add timeout.
 
 	for {
